@@ -13,3 +13,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // Jalur untuk Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+// 🌍 MINIMAL PROJECT: HELLO WORLD (Rute Publik Baru)
+Route::get('/hello', function () {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Hello World! API Backend Sistem Inventori berjalan dengan baik.',
+        'version' => '1.0.0'
+    ]);
+});
