@@ -14,9 +14,17 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+
+            // 🛠️ Kolom tambahan untuk username
+            $table->string('username')->unique();
+
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // 🛠️ Kolom tambahan untuk role pimpinan, admin, dan petugas
+            $table->enum('role', ['admin', 'petugas', 'pimpinan'])->default('petugas');
+
             $table->rememberToken();
             $table->timestamps();
         });
