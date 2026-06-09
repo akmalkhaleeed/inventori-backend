@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
+            KategoriSeeder::class, // Dipanggil duluan untuk mengisi tabel kategoris
+            SupplierSeeder::class, // Dipanggil duluan untuk mengisi tabel suppliers
+            BarangSeeder::class,   // Baru kemudian mengisi tabel barangs yang bergantung pada keduanya
         ]);
     }
 }
