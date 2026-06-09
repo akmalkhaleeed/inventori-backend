@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; // <-- Tambahkan baris ini
 
 class BarangController extends Controller
 {
@@ -11,7 +12,14 @@ class BarangController extends Controller
      */
     public function index()
     {
-        //
+        // Mengambil semua data barang (Read)
+        $barang = DB::table('barangs')->get();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Daftar data barang berhasil diambil',
+            'data'    => $barang
+        ], 200);
     }
 
     /**
