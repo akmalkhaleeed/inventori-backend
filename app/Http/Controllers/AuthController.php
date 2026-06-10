@@ -9,6 +9,38 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function register(Request $request)
+    {
+        // 1. Validasi input sesuai dengan skema tabel user kamu
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'username' => 'required|string|unique:users,username',
+            'email'    => 'required|string|email|unique:users,email',
+            'password' => 'required|string|min:6',
+            'role'     => 'required|in:admin,petugas,pimpinan',
+        ]);
+
+        // 2. Simpan user baru menggunakan Eloquent Model agar serasi
+        $user = User::create([
+            'name'     => $request->name,
+            'username' => $request->username,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password), // Enkripsi password demi keamanan
+            'role'     => $request->role,
+        ]);
+
+        // 3. Kirim respon sukses ke Postman / Diaz
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'User baru berhasil didaftarkan!',
+            'data'    => [
+                'name'     => $user->name,
+                'username' => $user->username,
+                'role'     => $user->role
+            ]
+        ], 201); // 201 Created
+    }
+
     public function login(Request $request)
     {
         // 1. Validasi input dari Frontend (Diaz)
