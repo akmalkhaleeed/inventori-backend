@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- Jangan lupa Wajib ada
+use Illuminate\Support\Facades\DB;
 
 class BarangController extends Controller
 {
@@ -36,7 +36,7 @@ class BarangController extends Controller
             'kategori_id' => 'required|integer|exists:kategoris,id',
             'supplier_id' => 'required|integer|exists:suppliers,id',
             'nama_barang' => 'required|string|max:255',
-            'stok'        => 'nullable|integer', // Boleh kosong, karena di migration defaultnya 0
+            'stok'        => 'nullable|integer',
             'harga'       => 'required|integer',
         ]);
 
@@ -45,7 +45,7 @@ class BarangController extends Controller
             'kategori_id' => $request->kategori_id,
             'supplier_id' => $request->supplier_id,
             'nama_barang' => $request->nama_barang,
-            'stok'        => $request->stok ?? 0, // Kalau stok nggak diisi, otomatis jadi 0
+            'stok'        => $request->stok ?? 0,
             'harga'       => $request->harga,
             'created_at'  => date('Y-m-d H:i:s'),
             'updated_at'  => date('Y-m-d H:i:s'),
@@ -58,5 +58,75 @@ class BarangController extends Controller
         ], 201);
     }
 
-    // ... (Fungsi show, update, destroy biarkan kosong untuk sekarang)
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        // Biarkan kosong
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        // 1. Validasi data barang yang mau diubah
+        $request->validate([
+            'kategori_id' => 'required|integer|exists:kategoris,id',
+            'supplier_id' => 'required|integer|exists:suppliers,id',
+            'nama_barang' => 'required|string|max:255',
+            'stok'        => 'nullable|integer',
+            'harga'       => 'required|integer',
+        ]);
+
+        // 2. Cek apakah data barang ada di database
+        $barang = DB::table('barangs')->where('id', $id)->first();
+
+        if (!$barang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data barang tidak ditemukan'
+            ], 404);
+        }
+
+        // 3. Eksekusi Update
+        DB::table('barangs')->where('id', $id)->update([
+            'kategori_id' => $request->kategori_id,
+            'supplier_id' => $request->supplier_id,
+            'nama_barang' => $request->nama_barang,
+            'stok'        => $request->stok ?? 0,
+            'harga'       => $request->harga,
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data barang berhasil diperbarui'
+        ], 200);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        // 1. Cek apakah data barang ada
+        $barang = DB::table('barangs')->where('id', $id)->first();
+
+        if (!$barang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data barang tidak ditemukan'
+            ], 404);
+        }
+
+        // 2. Eksekusi Hapus
+        DB::table('barangs')->where('id', $id)->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Data barang berhasil dihapus'
+        ], 200);
+    }
 }
