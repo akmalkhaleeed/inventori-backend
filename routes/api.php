@@ -27,7 +27,9 @@ Route::delete('/supplier/{id}', [SupplierController::class, 'destroy']);
 
 // Rute untuk Data Transaksional: Barang
 Route::get('/barang', [BarangController::class, 'index']);
-Route::post('/barang', [BarangController::class, 'store']); // <-- Tambahkan baris ini
+Route::post('/barang', [BarangController::class, 'store']);
+Route::put('/barang/{id}', [BarangController::class, 'update']);
+Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
 
 // 🔒 ROUTE PROTECTED (Hanya bisa diakses jika membawa Token Sanctum hasil login)
 Route::middleware('auth:sanctum')->group(function () {
