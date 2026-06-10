@@ -16,6 +16,8 @@ Route::get('/barang', [BarangController::class, 'index']);
 // Rute untuk Master Data: Kategori
 Route::get('/kategori', [KategoriController::class, 'index']);
 Route::post('/kategori', [KategoriController::class, 'store']);
+Route::put('/kategori/{id}', [KategoriController::class, 'update']);
+Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);
 
 // Rute untuk Master Data: Supplier (Baru)
 Route::get('/supplier', [SupplierController::class, 'index']);

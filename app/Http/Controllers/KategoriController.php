@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- Jangan lupa tambahkan ini
+use Illuminate\Support\Facades\DB; // <-- Sudah aman ter-import
 
 class KategoriController extends Controller
 {
@@ -59,7 +59,31 @@ class KategoriController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        // 1. Validasi inputan nama kategori baru
+        $request->validate([
+            'nama_kategori' => 'required|string|max:255',
+        ]);
+
+        // 2. Cek apakah data kategori yang mau diedit itu ada di database
+        $kategori = DB::table('kategoris')->where('id', $id)->first();
+
+        if (!$kategori) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data kategori tidak ditemukan'
+            ], 404);
+        }
+
+        // 3. Lakukan update data
+        DB::table('kategoris')->where('id', $id)->update([
+            'nama_kategori' => $request->nama_kategori,
+            'updated_at'    => date('Y-m-d H:i:s'),
+        ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Kategori berhasil diperbarui'
+        ], 200);
     }
 
     /**
@@ -67,6 +91,22 @@ class KategoriController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // 1. Cek apakah data kategori yang mau dihapus itu ada
+        $kategori = DB::table('kategoris')->where('id', $id)->first();
+
+        if (!$kategori) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data kategori tidak ditemukan'
+            ], 404);
+        }
+
+        // 2. Hapus data kategori dari database
+        DB::table('kategoris')->where('id', $id)->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Kategori berhasil dihapus'
+        ], 200);
     }
 }
