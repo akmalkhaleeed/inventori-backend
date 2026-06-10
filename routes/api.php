@@ -21,6 +21,10 @@ Route::post('/kategori', [KategoriController::class, 'store']);
 Route::get('/supplier', [SupplierController::class, 'index']);
 Route::post('/supplier', [SupplierController::class, 'store']);
 
+// Rute untuk Data Transaksional: Barang
+Route::get('/barang', [BarangController::class, 'index']);
+Route::post('/barang', [BarangController::class, 'store']); // <-- Tambahkan baris ini
+
 // 🔒 ROUTE PROTECTED (Hanya bisa diakses jika membawa Token Sanctum hasil login)
 Route::middleware('auth:sanctum')->group(function () {
 
