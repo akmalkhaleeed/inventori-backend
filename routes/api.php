@@ -4,7 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarangController;
-use App\Http\Controllers\KategoriController; // <-- Tambahkan import ini
+use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\SupplierController; // <-- Tambahkan import ini
 
 // 🚪 ROUTE PUBLIK (Bisa diakses tanpa login/token oleh Diaz / Postman)
 Route::post('/login', [AuthController::class, 'login']);
@@ -13,8 +14,12 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/barang', [BarangController::class, 'index']);
 
 // Rute untuk Master Data: Kategori
-Route::get('/kategori', [KategoriController::class, 'index']); // <-- Untuk Get (Read) Kategori
-Route::post('/kategori', [KategoriController::class, 'store']); // <-- Untuk Post (Create) Kategori
+Route::get('/kategori', [KategoriController::class, 'index']);
+Route::post('/kategori', [KategoriController::class, 'store']);
+
+// Rute untuk Master Data: Supplier (Baru)
+Route::get('/supplier', [SupplierController::class, 'index']);
+Route::post('/supplier', [SupplierController::class, 'store']);
 
 // 🔒 ROUTE PROTECTED (Hanya bisa diakses jika membawa Token Sanctum hasil login)
 Route::middleware('auth:sanctum')->group(function () {
