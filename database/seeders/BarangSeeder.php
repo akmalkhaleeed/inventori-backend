@@ -26,25 +26,35 @@ class BarangSeeder extends Seeder
         $supplierId1 = DB::table('suppliers')->value('id') ?? 1;
         $supplierId2 = DB::table('suppliers')->skip(1)->value('id') ?? 2;
 
-        // 3. Masukkan data barang tiruan sesuai dengan kolom migration kamu
+        // 3. Masukkan data barang tiruan sesuai dengan kolom migration terbaru
         DB::table('barangs')->insert([
             [
-                'kategori_id' => $kategoriId1,
-                'supplier_id' => $supplierId1,
-                'nama_barang' => 'Laptop ASUS Vivobook',
-                'stok'        => 10,
-                'harga'       => 8500000,
-                'created_at'  => date('Y-m-d H:i:s'),
-                'updated_at'  => date('Y-m-d H:i:s'),
+                'id_kategori'  => $kategoriId1,
+                'id_supplier'  => $supplierId1,
+                'nama_barang'  => 'Laptop ASUS Vivobook',
+                'stok'         => 10,
+                'satuan'       => 'Unit',
+                'harga_beli'   => 7500000,
+                'harga_jual'   => 8500000,
+                'lokasi_rak'   => 'A-01',
+                'stok_minimum' => 5,
+                'deskripsi'    => 'Laptop kantoran standar dengan performa stabil.',
+                'created_at'   => date('Y-m-d H:i:s'),
+                'updated_at'   => date('Y-m-d H:i:s'),
             ],
             [
-                'kategori_id' => $kategoriId2,
-                'supplier_id' => $supplierId2,
-                'nama_barang' => 'Mouse Logitech Wireless',
-                'stok'        => 50,
-                'harga'       => 300000,
-                'created_at'  => date('Y-m-d H:i:s'),
-                'updated_at'  => date('Y-m-d H:i:s'),
+                'id_kategori'  => $kategoriId2,
+                'id_supplier'  => $supplierId2,
+                'nama_barang'  => 'Mouse Logitech Wireless',
+                'stok'         => 50,
+                'satuan'       => 'Pcs',
+                'harga_beli'   => 150000,
+                'harga_jual'   => 300000,
+                'lokasi_rak'   => 'B-05',
+                'stok_minimum' => 10,
+                'deskripsi'    => 'Mouse nirkabel hemat baterai.',
+                'created_at'   => date('Y-m-d H:i:s'),
+                'updated_at'   => date('Y-m-d H:i:s'),
             ]
         ]);
     }

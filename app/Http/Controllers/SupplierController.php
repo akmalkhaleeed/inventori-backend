@@ -59,15 +59,14 @@ class SupplierController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // 1. Validasi data baru (alamat & no_telp boleh nullable)
         $request->validate([
             'nama_supplier' => 'required|string|max:255',
             'alamat'        => 'nullable|string',
             'no_telp'       => 'nullable|string|max:20',
         ]);
 
-        // 2. Cek apakah data supplier ada di database
-        $supplier = DB::table('suppliers')->where('id', $id)->first();
+        // Cek pakai id_supplier
+        $supplier = DB::table('suppliers')->where('id_supplier', $id)->first();
 
         if (!$supplier) {
             return response()->json([
@@ -76,8 +75,8 @@ class SupplierController extends Controller
             ], 404);
         }
 
-        // 3. Eksekusi Update
-        DB::table('suppliers')->where('id', $id)->update([
+        // Update pakai id_supplier
+        DB::table('suppliers')->where('id_supplier', $id)->update([
             'nama_supplier' => $request->nama_supplier,
             'alamat'        => $request->alamat,
             'no_telp'       => $request->no_telp,
@@ -95,8 +94,8 @@ class SupplierController extends Controller
      */
     public function destroy(string $id)
     {
-        // 1. Cek apakah data supplier ada
-        $supplier = DB::table('suppliers')->where('id', $id)->first();
+        // Cek pakai id_supplier
+        $supplier = DB::table('suppliers')->where('id_supplier', $id)->first();
 
         if (!$supplier) {
             return response()->json([
@@ -105,8 +104,8 @@ class SupplierController extends Controller
             ], 404);
         }
 
-        // 2. Eksekusi Hapus
-        DB::table('suppliers')->where('id', $id)->delete();
+        // Delete pakai id_supplier
+        DB::table('suppliers')->where('id_supplier', $id)->delete();
 
         return response()->json([
             'status'  => 'success',
