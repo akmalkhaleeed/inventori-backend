@@ -7,12 +7,13 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransaksiController;
-use App\Http\Controllers\UserController; // <-- Import UserController yang baru dibuat!
+use App\Http\Controllers\UserController;
 
 // ==========================================
 // 🚪 ROUTE PUBLIK (Bisa diakses tanpa login/token)
 // ==========================================
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']); // <-- Ini yang tadi bikin 404 Not Found
 
 // 🌍 MINIMAL PROJECT: HELLO WORLD
 Route::get('/hello', function () {

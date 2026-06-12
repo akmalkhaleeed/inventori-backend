@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB; // <-- Wajib di-import untuk Query Builder
+use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
@@ -12,12 +12,12 @@ class TransaksiController extends Controller
      */
     public function index()
     {
-        // Mengambil semua riwayat transaksi digabung dengan nama barang dan nama user pencatatnya
+        // Pakai leftJoin dan sesuaikan nama kolom dengan struktur baru
         $transaksi = DB::table('transaksis')
-            ->join('barangs', 'transaksis.barang_id', '=', 'barangs.id')
-            ->join('users', 'transaksis.user_id', '=', 'users.id') // Kita gabungkan juga dengan tabel users
+            ->leftJoin('barangs', 'transaksis.id_barang', '=', 'barangs.id_barang')
+            ->leftJoin('users', 'transaksis.id_user', '=', 'users.id')
             ->select('transaksis.*', 'barangs.nama_barang', 'users.name as nama_petugas')
-            ->orderBy('transaksis.created_at', 'desc')
+            ->orderBy('transaksis.tanggal_transaksi', 'desc') // Urutkan berdasarkan tanggal transaksi
             ->get();
 
         return response()->json([
@@ -32,18 +32,27 @@ class TransaksiController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi Inputan
+        // 1. Validasi Inputan sesuai nama kolom baru
         $request->validate([
-            'user_id'           => 'required|integer|exists:users,id', // <-- Validasi user_id wajib ada
-            'barang_id'         => 'required|integer|exists:barangs,id',
-            'jenis_transaksi'   => 'required|in:masuk,keluar', // Hanya boleh diisi 'masuk' atau 'keluar'
-            'jumlah'            => 'required|integer|min:1',   // Minimal input angka 1
-            'tanggal_transaksi' => 'required|date',
+            'id_user'           => 'required|integer|exists:users,id',
+            'id_barang'         => 'required|integer|exists:barangs,id_barang',
+            'jenis_transaksi'   => 'required|in:masuk,keluar',
+            'jumlah'            => 'required|integer|min:1',
+            'harga_beli'        => 'nullable|numeric',
+            'harga_jual_aktual' => 'nullable|numeric',
+            'tanggal_transaksi' => 'nullable|date',
             'keterangan'        => 'nullable|string',
         ]);
 
-        // 2. Ambil data barang saat ini untuk dicek/diubah stoknya
-        $barang = DB::table('barangs')->where('id', $request->barang_id)->first();
+        // 2. Ambil data barang saat ini untuk dicek/diubah stoknya (Pakai id_barang)
+        $barang = DB::table('barangs')->where('id_barang', $request->id_barang)->first();
+
+        if (!$barang) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Data barang tidak ditemukan!'
+            ], 404);
+        }
 
         // Siapkan variabel untuk menampung stok baru
         $stokSekarang = $barang->stok;
@@ -51,35 +60,34 @@ class TransaksiController extends Controller
 
         // 3. Logika Pengkondisian Jenis Transaksi
         if ($request->jenis_transaksi == 'masuk') {
-            // Kalau barang masuk, stok otomatis bertambah
             $stokBaru = $stokSekarang + $request->jumlah;
         } else if ($request->jenis_transaksi == 'keluar') {
-            // Kalau barang keluar, cek dulu apakah stoknya cukup atau tidak
             if ($stokSekarang < $request->jumlah) {
                 return response()->json([
                     'status'  => 'error',
                     'message' => 'Stok tidak mencukupi! Stok saat ini hanya sisa ' . $stokSekarang
-                ], 400); // 400 Bad Request
+                ], 400);
             }
-            // Kalau stok cukup, otomatis berkurang
             $stokBaru = $stokSekarang - $request->jumlah;
         }
 
         // 4. Mulai Simpan ke Database
         // A. Insert data ke tabel transaksis
         DB::table('transaksis')->insert([
-            'user_id'           => $request->user_id, // <-- Sekarang user_id dijamin masuk ke database!
-            'barang_id'         => $request->barang_id,
+            'id_user'           => $request->id_user,
+            'id_barang'         => $request->id_barang,
             'jenis_transaksi'   => $request->jenis_transaksi,
             'jumlah'            => $request->jumlah,
-            'tanggal_transaksi' => $request->tanggal_transaksi,
+            'harga_beli'        => $request->harga_beli,
+            'harga_jual_aktual' => $request->harga_jual_aktual,
             'keterangan'        => $request->keterangan,
+            'tanggal_transaksi' => $request->tanggal_transaksi ?? date('Y-m-d H:i:s'),
             'created_at'        => date('Y-m-d H:i:s'),
             'updated_at'        => date('Y-m-d H:i:s'),
         ]);
 
-        // B. Update stok baru ke tabel barangs
-        DB::table('barangs')->where('id', $request->barang_id)->update([
+        // B. Update stok baru ke tabel barangs (Pakai id_barang)
+        DB::table('barangs')->where('id_barang', $request->id_barang)->update([
             'stok'       => $stokBaru,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -87,7 +95,7 @@ class TransaksiController extends Controller
         return response()->json([
             'status'  => 'success',
             'message' => 'Transaksi barang ' . $request->jenis_transaksi . ' berhasil dicatat dan stok telah diperbarui.'
-        ], 200);
+        ], 201); // 201 karena berhasil Create data
     }
 
     /**
@@ -95,7 +103,7 @@ class TransaksiController extends Controller
      */
     public function show(string $id)
     {
-        //
+        // Opsional kalau mau nampilin detail 1 transaksi
     }
 
     /**
@@ -103,7 +111,7 @@ class TransaksiController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Biasanya data transaksi tidak disarankan untuk di-update langsung demi keaslian data (audit trail)
+        // Data transaksi tidak disarankan di-update untuk menjaga audit trail
     }
 
     /**
@@ -111,6 +119,6 @@ class TransaksiController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        // Data transaksi sebaiknya tidak dihapus (soft delete jika perlu)
     }
 }

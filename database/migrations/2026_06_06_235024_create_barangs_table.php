@@ -12,12 +12,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('barangs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('kategori_id')->constrained('kategoris')->onDelete('cascade');
-            $table->foreignId('supplier_id')->constrained('suppliers')->onDelete('cascade');
-            $table->string('nama_barang');
+            // PK: id_barang (Otomatis Auto Increment & Not Null)
+            $table->id('id_barang');
+
+            // FK: id_kategori (Default Null, Set Null jika kategori dihapus)
+            $table->unsignedBigInteger('id_kategori')->nullable();
+            // PERBAIKAN: Ubah references('id') menjadi references('id_kategori')
+            $table->foreign('id_kategori')->references('id_kategori')->on('kategoris')->onDelete('set null');
+
+            // FK: id_supplier (Default Null, Set Null jika supplier dihapus)
+            $table->unsignedBigInteger('id_supplier')->nullable();
+            // PERBAIKAN: Ubah references('id') menjadi references('id_supplier')
+            $table->foreign('id_supplier')->references('id_supplier')->on('suppliers')->onDelete('set null');
+
+            // Kolom Data Barang sesuai spesifikasi
+            $table->string('nama_barang', 100);
             $table->integer('stok')->default(0);
-            $table->bigInteger('harga');
+            $table->string('satuan', 20)->nullable();
+            $table->decimal('harga_beli', 12, 2)->nullable();
+            $table->decimal('harga_jual', 15, 2)->default(0.00);
+            $table->string('lokasi_rak', 100)->nullable();
+            $table->integer('stok_minimum')->default(5);
+            $table->text('deskripsi')->nullable();
+
+            // Timestamps (Otomatis membuat created_at dan updated_at)
             $table->timestamps();
         });
     }

@@ -12,10 +12,10 @@ class BarangController extends Controller
      */
     public function index()
     {
-        // Untuk data barang, kita pakai JOIN agar nama kategori & suppliernya ikut tampil (bukan cuma ID-nya)
+        // PERBAIKAN: Ubah kategoris.id menjadi kategoris.id_kategori & suppliers.id menjadi suppliers.id_supplier
         $barang = DB::table('barangs')
-            ->join('kategoris', 'barangs.kategori_id', '=', 'kategoris.id')
-            ->join('suppliers', 'barangs.supplier_id', '=', 'suppliers.id')
+            ->leftJoin('kategoris', 'barangs.id_kategori', '=', 'kategoris.id_kategori')
+            ->leftJoin('suppliers', 'barangs.id_supplier', '=', 'suppliers.id_supplier')
             ->select('barangs.*', 'kategoris.nama_kategori', 'suppliers.nama_supplier')
             ->get();
 
@@ -31,24 +31,34 @@ class BarangController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validasi inputan (termasuk ngecek ID kategori & supplier ada atau nggak di database)
+        // PERBAIKAN: Validasi exists diubah ke id_kategori dan id_supplier
         $request->validate([
-            'kategori_id' => 'required|integer|exists:kategoris,id',
-            'supplier_id' => 'required|integer|exists:suppliers,id',
-            'nama_barang' => 'required|string|max:255',
-            'stok'        => 'nullable|integer',
-            'harga'       => 'required|integer',
+            'id_kategori'  => 'nullable|integer|exists:kategoris,id_kategori',
+            'id_supplier'  => 'nullable|integer|exists:suppliers,id_supplier',
+            'nama_barang'  => 'required|string|max:100',
+            'stok'         => 'nullable|integer',
+            'satuan'       => 'nullable|string|max:20',
+            'harga_beli'   => 'nullable|numeric',
+            'harga_jual'   => 'required|numeric',
+            'lokasi_rak'   => 'nullable|string|max:100',
+            'stok_minimum' => 'nullable|integer',
+            'deskripsi'    => 'nullable|string',
         ]);
 
         // 2. Simpan data ke database
         DB::table('barangs')->insert([
-            'kategori_id' => $request->kategori_id,
-            'supplier_id' => $request->supplier_id,
-            'nama_barang' => $request->nama_barang,
-            'stok'        => $request->stok ?? 0,
-            'harga'       => $request->harga,
-            'created_at'  => date('Y-m-d H:i:s'),
-            'updated_at'  => date('Y-m-d H:i:s'),
+            'id_kategori'  => $request->id_kategori,
+            'id_supplier'  => $request->id_supplier,
+            'nama_barang'  => $request->nama_barang,
+            'stok'         => $request->stok ?? 0,
+            'satuan'       => $request->satuan,
+            'harga_beli'   => $request->harga_beli,
+            'harga_jual'   => $request->harga_jual ?? 0.00,
+            'lokasi_rak'   => $request->lokasi_rak,
+            'stok_minimum' => $request->stok_minimum ?? 5,
+            'deskripsi'    => $request->deskripsi,
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
         ]);
 
         // 3. Respons sukses
@@ -63,7 +73,19 @@ class BarangController extends Controller
      */
     public function show(string $id)
     {
-        // Biarkan kosong
+        // PERBAIKAN: Sesuaikan ON join dengan nama kolom PK yang benar
+        $barang = DB::table('barangs')
+            ->leftJoin('kategoris', 'barangs.id_kategori', '=', 'kategoris.id_kategori')
+            ->leftJoin('suppliers', 'barangs.id_supplier', '=', 'suppliers.id_supplier')
+            ->select('barangs.*', 'kategoris.nama_kategori', 'suppliers.nama_supplier')
+            ->where('barangs.id_barang', $id)
+            ->first();
+
+        if (!$barang) {
+            return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan'], 404);
+        }
+
+        return response()->json(['status' => 'success', 'data' => $barang], 200);
     }
 
     /**
@@ -71,17 +93,22 @@ class BarangController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // 1. Validasi data barang yang mau diubah
+        // PERBAIKAN: Validasi exists diubah ke id_kategori dan id_supplier
         $request->validate([
-            'kategori_id' => 'required|integer|exists:kategoris,id',
-            'supplier_id' => 'required|integer|exists:suppliers,id',
-            'nama_barang' => 'required|string|max:255',
-            'stok'        => 'nullable|integer',
-            'harga'       => 'required|integer',
+            'id_kategori'  => 'nullable|integer|exists:kategoris,id_kategori',
+            'id_supplier'  => 'nullable|integer|exists:suppliers,id_supplier',
+            'nama_barang'  => 'required|string|max:100',
+            'stok'         => 'nullable|integer',
+            'satuan'       => 'nullable|string|max:20',
+            'harga_beli'   => 'nullable|numeric',
+            'harga_jual'   => 'required|numeric',
+            'lokasi_rak'   => 'nullable|string|max:100',
+            'stok_minimum' => 'nullable|integer',
+            'deskripsi'    => 'nullable|string',
         ]);
 
-        // 2. Cek apakah data barang ada di database
-        $barang = DB::table('barangs')->where('id', $id)->first();
+        // 2. Cek apakah data barang ada di database (Pakai id_barang)
+        $barang = DB::table('barangs')->where('id_barang', $id)->first();
 
         if (!$barang) {
             return response()->json([
@@ -91,13 +118,18 @@ class BarangController extends Controller
         }
 
         // 3. Eksekusi Update
-        DB::table('barangs')->where('id', $id)->update([
-            'kategori_id' => $request->kategori_id,
-            'supplier_id' => $request->supplier_id,
-            'nama_barang' => $request->nama_barang,
-            'stok'        => $request->stok ?? 0,
-            'harga'       => $request->harga,
-            'updated_at'  => date('Y-m-d H:i:s'),
+        DB::table('barangs')->where('id_barang', $id)->update([
+            'id_kategori'  => $request->id_kategori,
+            'id_supplier'  => $request->id_supplier,
+            'nama_barang'  => $request->nama_barang,
+            'stok'         => $request->stok ?? 0,
+            'satuan'       => $request->satuan,
+            'harga_beli'   => $request->harga_beli,
+            'harga_jual'   => $request->harga_jual ?? 0.00,
+            'lokasi_rak'   => $request->lokasi_rak,
+            'stok_minimum' => $request->stok_minimum ?? 5,
+            'deskripsi'    => $request->deskripsi,
+            'updated_at'   => date('Y-m-d H:i:s'),
         ]);
 
         return response()->json([
@@ -111,8 +143,8 @@ class BarangController extends Controller
      */
     public function destroy(string $id)
     {
-        // 1. Cek apakah data barang ada
-        $barang = DB::table('barangs')->where('id', $id)->first();
+        // 1. Cek apakah data barang ada (Pakai id_barang)
+        $barang = DB::table('barangs')->where('id_barang', $id)->first();
 
         if (!$barang) {
             return response()->json([
@@ -122,7 +154,7 @@ class BarangController extends Controller
         }
 
         // 2. Eksekusi Hapus
-        DB::table('barangs')->where('id', $id)->delete();
+        DB::table('barangs')->where('id_barang', $id)->delete();
 
         return response()->json([
             'status'  => 'success',
