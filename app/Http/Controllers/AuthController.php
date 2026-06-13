@@ -68,9 +68,12 @@ class AuthController extends Controller
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => [
-                'name' => $user->name,
+                // PERBAIKAN DI SINI: Menambahkan ID ke dalam response
+                // Kita gunakan ?? agar mendukung primary key 'id' maupun 'id_user'
+                'id_user'  => $user->id_user ?? $user->id,
+                'name'     => $user->name,
                 'username' => $user->username,
-                'role' => $user->role // Ini penting untuk Diaz mengatur hak akses halaman di React!
+                'role'     => $user->role
             ]
         ]);
     }
