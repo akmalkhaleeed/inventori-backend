@@ -12,11 +12,12 @@ class TransaksiController extends Controller
      */
     public function index()
     {
-        // Pakai leftJoin dan sesuaikan nama kolom dengan struktur baru
+        // PERBAIKAN: Ubah alias 'users.name as nama_petugas' menjadi 'users.name as name'
+        // Agar sesuai dengan penangkap data di frontend React
         $transaksi = DB::table('transaksis')
             ->leftJoin('barangs', 'transaksis.id_barang', '=', 'barangs.id_barang')
             ->leftJoin('users', 'transaksis.id_user', '=', 'users.id')
-            ->select('transaksis.*', 'barangs.nama_barang', 'users.name as nama_petugas')
+            ->select('transaksis.*', 'barangs.nama_barang', 'users.name as name')
             ->orderBy('transaksis.tanggal_transaksi', 'desc') // Urutkan berdasarkan tanggal transaksi
             ->get();
 
