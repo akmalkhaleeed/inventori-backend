@@ -13,7 +13,7 @@ use App\Http\Controllers\UserController;
 // 🚪 ROUTE PUBLIK (Bisa diakses tanpa login/token)
 // ==========================================
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']); // <-- Ini yang tadi bikin 404 Not Found
+Route::post('/register', [AuthController::class, 'register']);
 
 // 🌍 MINIMAL PROJECT: HELLO WORLD
 Route::get('/hello', function () {
@@ -30,35 +30,51 @@ Route::get('/hello', function () {
 // ==========================================
 Route::middleware('auth:sanctum')->group(function () {
 
-    // 👥 1. Kelompok CRUD Manajemen User (Hanya boleh diakses oleh Admin)
-    Route::get('/user', [UserController::class, 'index']);       // Lihat Semua Karyawan
-    Route::post('/user', [UserController::class, 'store']);      // Tambah Karyawan Baru
-    Route::get('/user/{id}', [UserController::class, 'show']);   // Lihat Detail 1 Karyawan
-    Route::put('/user/{id}', [UserController::class, 'update']);  // Edit Karyawan
-    Route::delete('/user/{id}', [UserController::class, 'destroy']); // Hapus Karyawan
+    // ---------------------------------------------------------
+    // 🔓 KELOMPOK 1: AKSES BERSAMA (Admin & Petugas)
+    // ---------------------------------------------------------
+    Route::middleware('role:admin,petugas')->group(function () {
 
-    // 📂 2. Rute untuk Master Data: Kategori
-    Route::get('/kategori', [KategoriController::class, 'index']);
-    Route::post('/kategori', [KategoriController::class, 'store']);
-    Route::put('/kategori/{id}', [KategoriController::class, 'update']);
-    Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);
+        // Petugas & Admin sama-sama bisa melihat (Read Only) master data barang & kategori
+        Route::get('/barang', [BarangController::class, 'index']);
+        Route::get('/kategori', [KategoriController::class, 'index']);
 
-    // 🚚 3. Rute untuk Master Data: Supplier
-    Route::get('/supplier', [SupplierController::class, 'index']);
-    Route::post('/supplier', [SupplierController::class, 'store']);
-    Route::put('/supplier/{id}', [SupplierController::class, 'update']);
-    Route::delete('/supplier/{id}', [SupplierController::class, 'destroy']);
+        // Sesuai catatan: Petugas BISA melihat DAN menambah Supplier baru
+        Route::get('/supplier', [SupplierController::class, 'index']);
+        Route::post('/supplier', [SupplierController::class, 'store']);
 
-    // 📦 4. Rute untuk Master Data: Barang
-    Route::get('/barang', [BarangController::class, 'index']);
-    Route::post('/barang', [BarangController::class, 'store']);
-    Route::put('/barang/{id}', [BarangController::class, 'update']);
-    Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
+        // Petugas & Admin berhak penuh melihat riwayat dan mencatat transaksi (Barang Masuk / Keluar)
+        Route::get('/transaksi', [TransaksiController::class, 'index']);
+        Route::post('/transaksi', [TransaksiController::class, 'store']);
+    });
 
-    // 📊 5. Rute untuk Data Transaksional: Riwayat Transaksi & Logika Stok otomatis
-    Route::get('/transaksi', [TransaksiController::class, 'index']);
-    Route::post('/transaksi', [TransaksiController::class, 'store']);
+    // ---------------------------------------------------------
+    // 🔒 KELOMPOK 2: AKSES EKSKLUSIF (Hanya Boleh Diakses Admin)
+    // ---------------------------------------------------------
+    Route::middleware('role:admin')->group(function () {
 
-    // 🚪 6. Jalur untuk Logout
+        // 👥 Kelompok CRUD Manajemen User (Hanya Admin)
+        Route::get('/user', [UserController::class, 'index']);
+        Route::post('/user', [UserController::class, 'store']);
+        Route::get('/user/{id}', [UserController::class, 'show']);
+        Route::put('/user/{id}', [UserController::class, 'update']);
+        Route::delete('/user/{id}', [UserController::class, 'destroy']);
+
+        // 📂 Kelompok Manipulasi Data Kategori (Hanya Admin)
+        Route::post('/kategori', [KategoriController::class, 'store']);
+        Route::put('/kategori/{id}', [KategoriController::class, 'update']);
+        Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);
+
+        // 🚚 Kelompok Manipulasi Data Supplier sisa Edit & Hapus (Hanya Admin)
+        Route::put('/supplier/{id}', [SupplierController::class, 'update']);
+        Route::delete('/supplier/{id}', [SupplierController::class, 'destroy']);
+
+        // 📦 Kelompok Manipulasi Data Barang (Hanya Admin)
+        Route::post('/barang', [BarangController::class, 'store']);
+        Route::put('/barang/{id}', [BarangController::class, 'update']);
+        Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
+    });
+
+    // 🚪 Jalur untuk Logout (Semua user yang login bisa logout)
     Route::post('/logout', [AuthController::class, 'logout']);
 });
