@@ -31,25 +31,29 @@ Route::get('/hello', function () {
 Route::middleware('auth:sanctum')->group(function () {
 
     // ---------------------------------------------------------
-    // 🔓 KELOMPOK 1: AKSES BERSAMA (Admin & Petugas)
+    // 🔓 KELOMPOK 1: AKSES BERSAMA (Admin, Petugas, & Pimpinan) -> READ ONLY
+    // ---------------------------------------------------------
+    Route::middleware('role:admin,petugas,pimpinan')->group(function () {
+
+        // Pimpinan, Petugas, & Admin sama-sama bisa melihat data untuk kebutuhan laporan / dashboard
+        Route::get('/barang', [BarangController::class, 'index']);
+        Route::get('/kategori', [KategoriController::class, 'index']);
+        Route::get('/supplier', [SupplierController::class, 'index']);
+        Route::get('/transaksi', [TransaksiController::class, 'index']); // Ini untuk melihat riwayat barang masuk & keluar
+    });
+
+    // ---------------------------------------------------------
+    // ⚙️ KELOMPOK 2: AKSES OPERASIONAL DATA (Hanya Admin & Petugas) -> WRITE DATA
     // ---------------------------------------------------------
     Route::middleware('role:admin,petugas')->group(function () {
 
-        // Petugas & Admin sama-sama bisa melihat (Read Only) master data barang & kategori
-        Route::get('/barang', [BarangController::class, 'index']);
-        Route::get('/kategori', [KategoriController::class, 'index']);
-
-        // Sesuai catatan: Petugas BISA melihat DAN menambah Supplier baru
-        Route::get('/supplier', [SupplierController::class, 'index']);
+        // Petugas & Admin bisa menginput data supplier & transaksi baru (Pimpinan TIDAK BISA)
         Route::post('/supplier', [SupplierController::class, 'store']);
-
-        // Petugas & Admin berhak penuh melihat riwayat dan mencatat transaksi (Barang Masuk / Keluar)
-        Route::get('/transaksi', [TransaksiController::class, 'index']);
         Route::post('/transaksi', [TransaksiController::class, 'store']);
     });
 
     // ---------------------------------------------------------
-    // 🔒 KELOMPOK 2: AKSES EKSKLUSIF (Hanya Boleh Diakses Admin)
+    // 🔒 KELOMPOK 3: AKSES EKSKLUSIF MANAJEMEN (Hanya Boleh Diakses Admin)
     // ---------------------------------------------------------
     Route::middleware('role:admin')->group(function () {
 
@@ -69,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/supplier/{id}', [SupplierController::class, 'update']);
         Route::delete('/supplier/{id}', [SupplierController::class, 'destroy']);
 
-        // 📦 Kelompok Manipulasi Data Barang (Hanya Admin)
+        // 📦 Kelompok Manipulasi Data Barang (Tambah, Edit, Hapus)
         Route::post('/barang', [BarangController::class, 'store']);
         Route::put('/barang/{id}', [BarangController::class, 'update']);
         Route::delete('/barang/{id}', [BarangController::class, 'destroy']);
