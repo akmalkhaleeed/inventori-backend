@@ -45,21 +45,43 @@ class BarangController extends Controller
             'deskripsi'    => 'nullable|string',
         ]);
 
+        $stokAwal = $request->stok ?? 0;
+        $now = date('Y-m-d H:i:s');
+
         // 2. Simpan data ke database
-        DB::table('barangs')->insert([
+        // PERBAIKAN: pakai insertGetId supaya kita tahu id_barang yang baru dibuat,
+        // dibutuhkan untuk membuat transaksi stok awal di bawah.
+        $idBarangBaru = DB::table('barangs')->insertGetId([
             'id_kategori'  => $request->id_kategori,
             'id_supplier'  => $request->id_supplier,
             'nama_barang'  => $request->nama_barang,
-            'stok'         => $request->stok ?? 0,
+            'stok'         => $stokAwal,
             'satuan'       => $request->satuan,
             'harga_beli'   => $request->harga_beli,
             'harga_jual'   => $request->harga_jual ?? 0.00,
             'lokasi_rak'   => $request->lokasi_rak,
             'stok_minimum' => $request->stok_minimum ?? 5,
             'deskripsi'    => $request->deskripsi,
-            'created_at'   => date('Y-m-d H:i:s'),
-            'updated_at'   => date('Y-m-d H:i:s'),
-        ]);
+            'created_at'   => $now,
+            'updated_at'   => $now,
+        ], 'id_barang');
+
+        // PERBAIKAN: Auto-catat stok awal sebagai transaksi "masuk" supaya muncul
+        // juga di Laporan Transaksi / Barang Masuk, bukan cuma di tabel barangs.
+        if ($stokAwal > 0) {
+            DB::table('transaksis')->insert([
+                'id_user'           => auth()->id(),
+                'id_barang'         => $idBarangBaru,
+                'jenis_transaksi'   => 'masuk',
+                'jumlah'            => $stokAwal,
+                'harga_beli'        => $request->harga_beli,
+                'harga_jual_aktual' => null,
+                'keterangan'        => 'Stok awal saat barang baru ditambahkan',
+                'tanggal_transaksi' => $now,
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ]);
+        }
 
         // 3. Respons sukses
         return response()->json([

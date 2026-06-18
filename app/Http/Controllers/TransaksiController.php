@@ -9,21 +9,51 @@ class TransaksiController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Mendukung filter dinamis dari frontend React (LaporanTransaksi.jsx)
      */
-    public function index()
+    public function index(Request $request)
     {
-        // PERBAIKAN: Ubah alias 'users.name as nama_petugas' menjadi 'users.name as name'
-        // Agar sesuai dengan penangkap data di frontend React
-        $transaksi = DB::table('transaksis')
+        // 1. Tangkap parameter filter query string dari URL React
+        $tglMulai       = $request->query('tgl_mulai');
+        $tglSelesai     = $request->query('tgl_selesai');
+        $idBarang       = $request->query('id_barang');
+        $jenisTransaksi = $request->query('jenis_transaksi');
+
+        // 2. Bangun Query dasar, join tabel barangs & users, pastikan 'satuan' ditarik
+        $query = DB::table('transaksis')
             ->leftJoin('barangs', 'transaksis.id_barang', '=', 'barangs.id_barang')
             ->leftJoin('users', 'transaksis.id_user', '=', 'users.id')
-            ->select('transaksis.*', 'barangs.nama_barang', 'users.name as name')
-            ->orderBy('transaksis.tanggal_transaksi', 'desc') // Urutkan berdasarkan tanggal transaksi
-            ->get();
+            ->select('transaksis.*', 'barangs.nama_barang', 'barangs.satuan', 'users.name as name');
 
+        // 3. Sistem Filter Kondisional Menggunakan when()
+
+        // Filter Tanggal Mulai (Kunci dari Jam 00:00:00 awal hari)
+        $query->when($tglMulai, function ($q) use ($tglMulai) {
+            return $q->where('transaksis.tanggal_transaksi', '>=', $tglMulai . ' 00:00:00');
+        });
+
+        // Filter Tanggal Selesai (Kunci sampai Jam 23:59:59 akhir hari)
+        $query->when($tglSelesai, function ($q) use ($tglSelesai) {
+            return $q->where('transaksis.tanggal_transaksi', '<=', $tglSelesai . ' 23:59:59');
+        });
+
+        // Filter Berdasarkan ID Barang tertentu
+        $query->when($idBarang, function ($q) use ($idBarang) {
+            return $q->where('transaksis.id_barang', $idBarang);
+        });
+
+        // Filter Berdasarkan Jenis Transaksi ('masuk' atau 'keluar')
+        $query->when($jenisTransaksi, function ($q) use ($jenisTransaksi) {
+            return $q->where('transaksis.jenis_transaksi', $jenisTransaksi);
+        });
+
+        // 4. Eksekusi query dengan urutan transaksi terbaru di paling atas
+        $transaksi = $query->orderBy('transaksis.tanggal_transaksi', 'desc')->get();
+
+        // 5. Kirim data balik sebagai Response JSON ke React
         return response()->json([
             'status'  => 'success',
-            'message' => 'Daftar riwayat transaksi berhasil diambil',
+            'message' => 'Daftar riwayat transaksi berhasil difilter',
             'data'    => $transaksi
         ], 200);
     }
